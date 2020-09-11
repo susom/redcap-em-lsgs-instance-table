@@ -552,6 +552,7 @@ var <?php echo self::MODULE_VARNAME;?> = (function(window, document, $, app_path
                         $('button[name=submit-btn-saverecord]')
                             .attr('name', 'submit-btn-savecontinue')
                             .html('<?php echo $this->lang['data_entry_292'];?>'); // Save & Stay
+
                         $('button[name=submit-btn-cancel]')
                             .removeAttr('onclick')
                             .click(function() {
@@ -596,7 +597,7 @@ var <?php echo self::MODULE_VARNAME;?> = (function(window, document, $, app_path
                                 ? ''             // repeating event - empty string key
                                 : $_GET['page']; // repeating form  - form name key
 
-                        $recordData = REDCap::getData('array',$_GET['id'],$_GET['page'].'_complete',$_GET['evet_id']);
+                        $recordData = REDCap::getData('array',$_GET['id'],$_GET['page'].'_complete',$_GET['event_id']);
                         
                         $currentInstances = array_keys($recordData[$_GET['id']]['repeat_instances'][$_GET['event_id']][$formKey]);
                         $_GET['instance'] = 1 + end($currentInstances);
