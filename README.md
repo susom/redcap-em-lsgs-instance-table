@@ -24,7 +24,7 @@ This example shows (on the right-hand side) a form containing three descriptive 
 
 ![@INSTANCETABLE example](./instancetable.png)
 
-#Stanford Enhancements
+##Stanford Enhancements
 1. Added a filter to ensure that when you use this EM in a repeating form to embed a secondary
 repeating form, only the associated records appear. Variants exists for use 
 with LSGS/InstanceSelect and native association without an additional EM
@@ -32,3 +32,47 @@ with LSGS/InstanceSelect and native association without an additional EM
 1. Modified the existing "Save and Stay" to read "Save and Quit" to better reflect the actual functionality
 1. Added a feature to specify the default value for the join key in the associated
 repeating form when creating a new record
+
+### Stanford Enhancement: Visualizing Hierarchical Data
+ 
+When repeating forms are used to capture data with multiple one-to-many
+relationships, you can use two additional action tags to perform data-driven
+filtering.  For example, a patient can have many visits, and on each visit 
+they can be taking multiple medications. Assuming medications are 
+ represented in their own repeating form with the date of clinic visit
+is denormalized into the medication data (e.g. using a SQL lookup field)
+, you can use the date of visit
+as a filter for the medication instance table.
+
+#### Variant 1: for use in conjunction with InstanceSelect
+If you have enabled and configured MCRI's InstanceSelect 
+to establish the relationships between your repeating forms,
+use
+@INSTANCETABLE_REF=field on the field referred to by the linked instrument field with the @FORMINSTANCE annotation
+
+For example, if visits have multiple medications, you could set up a form called visit with a descriptive field medication_list
+that refers to the form called medications with an action tag on visit.medication_list, @INSTANCETABLE=medications.
+The medications form has a field called med_visit_instance tagged with Field Annotation: @FORMINSTANCE=visit.
+In this case, in addition to tagging visit.medication_list with
+@INSTANCETABLE=medications, you would also add
+ @INSTANCETABLE_REF=med_visit_instance. Now you have pointers in both directions, one from medications to visit
+ with the @FORMINSTANCE=visit tag on medications.med_visit_instance, and a counterpart from visit to medications
+ with the @INSTANCETABLE_REF=med_visit_instance tag on visit.medication_list.  This pair of bi-directional pointers
+ enables the InstanceTable EM features supporting embedded repeating forms.
+
+#### Variant 2: without InstanceSelect
+
+@INSTANCETABLE_SRC=field on current instrument with the value for the filter
+
+@INSTANCETABLE_DST=corresponding field on the @INSTANCETABLE instrument 
+
+For example
+Parent form 'visit' with date field 'visit_date' and the instance table
+Child form 'meds' with date field 'med_visit_date'
+The action tags will be
+
+@INSTANCETABLE=meds
+
+@INSTANCETABLE_SRC=visit_date
+
+@INSTANCETABLE_DST=med_visit_date
