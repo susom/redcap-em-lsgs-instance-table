@@ -152,7 +152,7 @@ class MCRIInstanceTable extends AbstractExternalModule
 
                                     $join_val  = $this->repeat_instance;
                                     $filter  = "[" . $matches[1] ."] = '" .$join_val."'";
-                                    $this->defaultValueForNewPopup = '&' . $matches[1] . '='.$join_val;
+                                    $this->defaultValueForNewPopup = '&parent_instance='.$join_val;
                                 }
 
                                 $ajaxUrl = $this->getUrl('instance_table_ajax.php');
