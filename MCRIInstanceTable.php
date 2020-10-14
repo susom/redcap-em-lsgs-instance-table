@@ -30,8 +30,6 @@ class MCRIInstanceTable extends AbstractExternalModule
   const ACTION_TAG_LABEL = '@INSTANCETABLE_LABEL';
   const ACTION_TAG_SCROLLX = '@INSTANCETABLE_SCROLLX';
   const ACTION_TAG_HIDEADDBTN = '@INSTANCETABLE_HIDEADD'; // i.e. hide "Add" button even if user has edit access to form
-  const ACTION_TAG_SRC = '@INSTANCETABLE_SRC';
-  const ACTION_TAG_DST = '@INSTANCETABLE_DST';
   const ACTION_TAG_REF = '@INSTANCETABLE_REF';
   const ADD_NEW_BTN_YSHIFT = '0px';
   const MODULE_VARNAME = 'MCRI_InstanceTable';
@@ -113,10 +111,10 @@ class MCRIInstanceTable extends AbstractExternalModule
       // Group 1.	20-37	eee_arm_1:fff_fff
       // Group 2.	20-30	eee_arm_1:
       if ($fieldDetails['field_type']==='descriptive' &&
-        preg_match("/".self::ACTION_TAG."='?((\w+_arm_\d+[a-z]?:)?\w+)'?\s?/", $fieldDetails['field_annotation'], $matches)) {
+        preg_match("/".self::ACTION_TAG."\s*=\s*'?((\w+_arm_\d+[a-z]?:)?\w+)'?\s?/", $fieldDetails['field_annotation'], $matches)) {
 
-        if (REDCap::isLongitudinal() && strpos($matches[1], ':')>0) {
-          $eventform = explode(':', $matches[1], 2);
+        if (REDCap::isLongitudinal() && strpos(trim($matches[1]), ':')>0) {
+          $eventform = explode(':', trim($matches[1]), 2);
           $eventId = REDCap::getEventIdFromUniqueEvent($eventform[0]);
           $eventName = $eventform[0];
           $formName = $eventform[1];
@@ -136,22 +134,14 @@ class MCRIInstanceTable extends AbstractExternalModule
         $repeatingFormDetails['html_table_id'] = self::MODULE_VARNAME.'_'.$fieldName.'_tbl_'.$eventName.'_'.$formName;
         $repeatingFormDetails['html_table_class'] = self::MODULE_VARNAME.'_'.$eventName.'_'.$formName; // used to find tables to refresh after add/edit
 
-        // added 2020-09-02 by scweber@stanford.edu - new feature to filter records on a supplemental join key
+        // filter records on an optional supplemental join key
         // useful in cases where repeating data entry forms are being used to represent relational data
-        // e.g. when multiple medications are recorded on each visit, the visit date is also captured for each medication
-        // and the medications shown in the instance table on a given visit should be filtered by the current visit date
-//                                if (preg_match("/".self::ACTION_TAG_SRC."='?((\w+_arm_\d+[a-z]?:)?\w+)'?\s?/", $fieldDetails['field_annotation'], $matches)) {
-//                                    $recordData = REDCap::getData('array', $this->record, $matches[1], $this->event_id, null, false, false, false, null, false); // export raw
-//                                    $join_val  = $recordData[1]['repeat_instances'][$this->event_id][$this->instrument][$this->repeat_instance][$matches[1]];
-//                                    if (preg_match("/".self::ACTION_TAG_DST."='?((\w+_arm_\d+[a-z]?:)?\w+)'?\s?/", $fieldDetails['field_annotation'], $matches)) {
-//                                        $filter  = "[" . $matches[1] ."] = '" .$join_val."'";
-//                                        $this->defaultValueForNewPopup = '&' . $matches[1] . '='.$join_val;
-//                                    }
-//                                }
-        if (preg_match("/".self::ACTION_TAG_REF."='?((\w+_arm_\d+[a-z]?:)?\w+)'?\s?/", $fieldDetails['field_annotation'], $matches)) {
+        // e.g. when multiple medications are recorded on each visit (of which there can also be multiple),
+        // the medications shown in the instance table on a visit instance should be filtered by their relationship with that visit instance
+        if (preg_match("/".self::ACTION_TAG_REF."\s*=\s*'?((\w+_arm_\d+[a-z]?:)?\w+)'?\s?/", $fieldDetails['field_annotation'], $matches)) {
 
           $join_val  = $this->repeat_instance;
-          $filter  = "[" . $matches[1] ."] = '" .$join_val."'";
+          $filter  = "[" . trim($matches[1]) ."] = '" .$join_val."'";
           $this->defaultValueForNewPopup = '&parent_instance='.$join_val;
         }
 
