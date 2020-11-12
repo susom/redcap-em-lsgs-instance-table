@@ -140,7 +140,8 @@ class MCRIInstanceTable extends AbstractExternalModule
         // the medications shown in the instance table on a visit instance should be filtered by their relationship with that visit instance
         if (preg_match("/".self::ACTION_TAG_REF."\s*=\s*'?((\w+_arm_\d+[a-z]?:)?\w+)'?\s?/", $fieldDetails['field_annotation'], $matches)) {
 
-          $join_val  = $this->repeat_instance;
+          $join_val  = ($this->repeat_instance == null || empty($this->repeat_instance))
+            ? 1 : $this->repeat_instance;
           $filter  = "[" . trim($matches[1]) ."] = '" .$join_val."'";
           $this->defaultValueForNewPopup = '&parent_instance='.$join_val;
         }
@@ -296,47 +297,51 @@ class MCRIInstanceTable extends AbstractExternalModule
       ? ''     // repeating event - empty string key
       : $form; // repeating form  - form name key
 
-    foreach ($recordData[$record]['repeat_instances'][$event][$formKey] as $instance => $instanceFieldData) {
-      $thisInstanceValues = array();
-      $thisInstanceValues[] = $this->makeInstanceNumDisplay($instance, $record, $event, $form, $instance);
+    if (!empty($recordData[$record]['repeat_instances'][$event][$formKey])) {
+      foreach ($recordData[$record]['repeat_instances'][$event][$formKey] as $instance => $instanceFieldData) {
+        $thisInstanceValues = array();
+        $thisInstanceValues[] = $this->makeInstanceNumDisplay($instance, $record, $event, $form, $instance);
 
-      foreach ($instanceFieldData as $fieldName => $value) {
-        if (trim($value)==='') {
-          $thisInstanceValues[] = '';
-          continue;
-        }
-
-        $fieldType = $repeatingFormFields[$fieldName]['field_type'];
-
-        if ($fieldName===$form.'_complete') {
-          if ($this->isSurvey) { continue; }
-          $outValue = $this->makeFormStatusDisplay($value, $record, $event, $form, $instance);
-
-        } else if (in_array($fieldType, array("advcheckbox", "radio", "select", "checkbox", "dropdown", "sql", "yesno", "truefalse"))) {
-          $outValue = $this->makeChoiceDisplay($value, $repeatingFormFields, $fieldName);
-
-        } else if ($fieldType==='text') {
-          $ontologyOption = $this->Proj->metadata[$fieldName]['element_enum'];
-          if ($ontologyOption!=='' && preg_match('/^\w+:\w+$/', $ontologyOption)) {
-            // ontology fields are text fields with an element enum like "BIOPORTAL:ICD10"
-            list($ontologyService, $ontologyCategory) = explode(':',$ontologyOption,2);
-            $outValue = $this->makeOntologyDisplay($value, $ontologyService, $ontologyCategory);
-          } else {
-            // regular text fields have null element_enum
-            $outValue = $this->makeTextDisplay($value, $repeatingFormFields, $fieldName);
+        foreach ($instanceFieldData as $fieldName => $value) {
+          if (trim($value) === '') {
+            $thisInstanceValues[] = '';
+            continue;
           }
 
-        } else if ($fieldType==='file') {
-          $outValue = $this->makeFileDisplay($value, $record, $event, $instance, $fieldName);
+          $fieldType = $repeatingFormFields[$fieldName]['field_type'];
 
-        } else {
-          $outValue = $value;
+          if ($fieldName === $form . '_complete') {
+            if ($this->isSurvey) {
+              continue;
+            }
+            $outValue = $this->makeFormStatusDisplay($value, $record, $event, $form, $instance);
+
+          } else if (in_array($fieldType, array("advcheckbox", "radio", "select", "checkbox", "dropdown", "sql", "yesno", "truefalse"))) {
+            $outValue = $this->makeChoiceDisplay($value, $repeatingFormFields, $fieldName);
+
+          } else if ($fieldType === 'text') {
+            $ontologyOption = $this->Proj->metadata[$fieldName]['element_enum'];
+            if ($ontologyOption !== '' && preg_match('/^\w+:\w+$/', $ontologyOption)) {
+              // ontology fields are text fields with an element enum like "BIOPORTAL:ICD10"
+              list($ontologyService, $ontologyCategory) = explode(':', $ontologyOption, 2);
+              $outValue = $this->makeOntologyDisplay($value, $ontologyService, $ontologyCategory);
+            } else {
+              // regular text fields have null element_enum
+              $outValue = $this->makeTextDisplay($value, $repeatingFormFields, $fieldName);
+            }
+
+          } else if ($fieldType === 'file') {
+            $outValue = $this->makeFileDisplay($value, $record, $event, $instance, $fieldName);
+
+          } else {
+            $outValue = $value;
+          }
+
+          $thisInstanceValues[] = $outValue;
         }
 
-        $thisInstanceValues[] = $outValue;
+        $instanceData[] = $thisInstanceValues;
       }
-
-      $instanceData[] = $thisInstanceValues;
     }
     return $instanceData;
   }
@@ -437,9 +442,9 @@ class MCRIInstanceTable extends AbstractExternalModule
   protected function insertJS() {
     ?>
     <style type="text/css">
-        .<?php echo self::MODULE_VARNAME;?> tbody tr { font-weight:normal; }
-        /*.greenhighlight {background-color: inherit !important; }*/
-        /*.greenhighlight table td {background-color: inherit !important; }*/
+      .<?php echo self::MODULE_VARNAME;?> tbody tr { font-weight:normal; }
+      /*.greenhighlight {background-color: inherit !important; }*/
+      /*.greenhighlight table td {background-color: inherit !important; }*/
     </style>
     <script type="text/javascript">
       'use strict';
@@ -533,15 +538,14 @@ class MCRIInstanceTable extends AbstractExternalModule
    * JS to hide unwanted elements in instance data entry popup window
    * Hide:
    * - left-hand menu column
-   * - Save & Exit button
    * - Save & Exit Record button
    * - Save & Go To Next Record button
    */
   protected function popupViewTweaks() {
     ?>
     <style type="text/css">
-        .navbar-toggler, #west, #formSaveTip, #dataEntryTopOptionsButtons, #formtop-div { display: none !important; }
-        /*div[aria-describedby="reqPopup"] > .ui-dialog-buttonpane > button { color:red !important; visibility: hidden; }*/
+      .navbar-toggler, #west, #formSaveTip, #dataEntryTopOptionsButtons, #formtop-div { display: none !important; }
+      /*div[aria-describedby="reqPopup"] > .ui-dialog-buttonpane > button { color:red !important; visibility: hidden; }*/
     </style>
     <script type="text/javascript">
 
@@ -569,7 +573,7 @@ class MCRIInstanceTable extends AbstractExternalModule
             dataEntrySubmit(this);
             event.preventDefault();
             window.opener.refreshTables();
-            window.setTimeout(window.close, 300);
+            window.setTimeout(window.close, 500);
           });
         $('#submit-btn-savenextinstance')// Save & Next Instance
           .attr('name', 'submit-btn-savecontinue')
@@ -581,7 +585,7 @@ class MCRIInstanceTable extends AbstractExternalModule
             window.opener.refreshTables();
             var redirectUrl = $.urlParamReplace(currentUrl, "instance", 1)
               + '&extmod_instance_table_add_new=1';
-            window.setTimeout($.redirectUrl, 300, redirectUrl);
+            window.setTimeout($.redirectUrl, 500, redirectUrl);
           });
         $('#submit-btn-savenextform').css("display", "none");
         $('#submit-btn-saveexitrecord').css("display", "none");
@@ -645,7 +649,9 @@ class MCRIInstanceTable extends AbstractExternalModule
       $lastActionTagDesc .= $this->makeTagTR(static::ACTION_TAG, static::ACTION_TAG_DESC);
 
       $this->lang[$langElement] = rtrim(rtrim(rtrim(trim($lastActionTagDesc), '</tr>')),'</td>');
-    } else if (PAGE==='DataEntry/index.php' && isset($_GET['extmod_instance_table']) && isset($_GET['extmod_instance_table_add_new'])) {
+    } else if (PAGE==='DataEntry/index.php'
+      && isset($_GET['extmod_instance_table'])
+      && isset($_GET['extmod_instance_table_add_new'])) {
       // adding new instance - read current max and redirect to + 1
       $formKey = ($this->Proj->isRepeatingEvent($_GET['event_id']))
         ? ''             // repeating event - empty string key
