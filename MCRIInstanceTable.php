@@ -524,10 +524,16 @@ class MCRIInstanceTable extends AbstractExternalModule
       })(window, document, jQuery, app_path_webroot, pid, simpleDialog);
 
       function refreshTables() {
-        var tableClass = '<?php echo self::MODULE_VARNAME;?>';
-        $('.'+tableClass).each(function() {
-          $(this).DataTable().ajax.reload( null, false ); // don't reset user paging on reload
-        });
+          actuallyRefreshTables();
+          // now start a timer and try it again after a second, to give the server ample time to process the data
+          window.setTimeout( actuallyRefreshTables(), 1500);
+      }
+      
+      function actuallyRefreshTables() {
+          var tableClass = '<?php echo self::MODULE_VARNAME;?>';
+          $('.'+tableClass).each(function() {
+              $(this).DataTable().ajax.reload( null, false ); // don't reset user paging on reload
+          });
       }
     </script>
     <?php
@@ -565,6 +571,8 @@ class MCRIInstanceTable extends AbstractExternalModule
       }
 
       $(document).ready(function() {
+        window.onunload = function(){window.opener.refreshTables();};
+        
         $('#form').attr('action',$('#form').attr('action')+'&extmod_instance_table=1');
         $('button[name=submit-btn-saverecord]')// Save & Close
           .attr('name', 'submit-btn-savecontinue')
@@ -573,8 +581,9 @@ class MCRIInstanceTable extends AbstractExternalModule
             dataEntrySubmit(this);
             event.preventDefault();
             window.opener.refreshTables();
-            window.setTimeout(window.close, 500);
+            window.setTimeout(window.close, 800);
           });
+        
         $('#submit-btn-savenextinstance')// Save & Next Instance
           .attr('name', 'submit-btn-savecontinue')
           .removeAttr('onclick')
@@ -596,6 +605,13 @@ class MCRIInstanceTable extends AbstractExternalModule
             window.opener.refreshTables();
             window.close();
           });
+          <?php
+          if ( isset($_GET['extmod_instance_table_add_new'])) {
+          ?>
+               $('button[name=submit-btn-deleteform]').css("display", "none");
+          <?php
+          } else {
+              ?>
         $('button[name=submit-btn-deleteform]')
           .removeAttr('onclick')
           .click(function(event) {
@@ -616,7 +632,9 @@ class MCRIInstanceTable extends AbstractExternalModule
               'Delete data for THIS FORM only');
             return false;
           });
+          
         <?php
+          }
         if (isset($_GET['__reqmsg'])) {
         ?>
         setTimeout(function() {
