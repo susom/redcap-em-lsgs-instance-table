@@ -12,9 +12,12 @@ use Form;
 use RCView;
 use UIState;
 use REDCap;
+require_once "emLoggerTrait.php";
 
 class MCRIInstanceTable extends AbstractExternalModule
 {
+    use emLoggerTrait;
+
     protected $isSurvey=false;
     protected $taggedFields=array();
 
@@ -395,7 +398,9 @@ class MCRIInstanceTable extends AbstractExternalModule
                         continue;
                     }
 
-                    $fieldType = $repeatingFormFields[$fieldName]['field_type'];
+                    $fieldType = isset($repeatingFormFields[$fieldName])
+                        ? $repeatingFormFields[$fieldName]['field_type']
+                    : '';
 
                     if ($fieldName === $form . '_complete') {
                         if ($this->isSurvey) { continue; }
@@ -677,7 +682,7 @@ class MCRIInstanceTable extends AbstractExternalModule
 
           return {
             addNewInstance: function(record, event, form, linkFld, linkIns) {
-              var ref = (linkFld=='')?'':'&link_field='+linkFld+'&link_instance='+linkIns;
+              var ref = (linkFld=='')? '':'&link_field='+linkFld+'&link_instance='+linkIns;
               instancePopup('Add instance', record, event, form, '1&extmod_instance_table_add_new=1'+ref);
               return false;
             },
@@ -950,7 +955,6 @@ class MCRIInstanceTable extends AbstractExternalModule
      * @global type $isAjax
      * @param type $tag
      * @param type $description
-     * @return type
      * @return type
      */
     protected function makeTagTR($tag, $description) {
