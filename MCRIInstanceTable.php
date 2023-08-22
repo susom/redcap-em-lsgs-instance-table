@@ -27,6 +27,7 @@ class MCRIInstanceTable extends AbstractExternalModule
     protected $user_rights;
     protected $event_id;
     protected $record;
+    protected $instrument;
     protected $instance;
     protected $group_id;
     protected $repeat_instance;
