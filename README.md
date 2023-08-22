@@ -1,4 +1,4 @@
-# REDCap External Module: MCRI Instance Table (Stanford fork)
+# REDCap External Module: MCRI Instance Table (Stanford fork) 
 
 Stanford fork of https://github.com/lsgs/redcap-instance-table
 
