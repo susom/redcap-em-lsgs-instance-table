@@ -68,7 +68,7 @@ class MCRIInstanceTable extends AbstractExternalModule
      * redcap_save_record
      * When saving an instance in the popup, get &extmod_instance_table=1 into the redirect link e.g. when missing required fields found
      */
-    public function redcap_save_record($project_id, $record=null, $instrument, $event_id, $group_id=null, $survey_hash=null, $response_id=null, $repeat_instance=1) {
+    public function redcap_save_record($project_id, $record, $instrument, $event_id, $group_id, $survey_hash, $response_id, $repeat_instance) {
         if (isset($_GET['extmod_instance_table']) && $_GET['extmod_instance_table']=='1') {
             $_GET['instance'] .= '&extmod_instance_table=1';
         }
@@ -104,11 +104,11 @@ class MCRIInstanceTable extends AbstractExternalModule
         $this->pageTop();
     }
 
-    protected function initHook($record, $instrument, $event_id, $isSurvey=false, $group_id, $repeat_instance) {
+    protected function initHook($record, $instrument, $event_id, $isSurvey, $group_id, $repeat_instance) {
         $this->record = $record;
         $this->instrument = $instrument;
         $this->event_id = $event_id;
-        $this->isSurvey = $isSurvey;
+        $this->isSurvey = (isset($isSurvey) ? $isSurvey : false);
         $this->group_id = $group_id;
         $this->repeat_instance = $repeat_instance;
     }
@@ -413,7 +413,7 @@ class MCRIInstanceTable extends AbstractExternalModule
 
                     } else if ($fieldType === 'text') {
                         $ontologyOption = $this->Proj->metadata[$fieldName]['element_enum'];
-                        if ($ontologyOption !== '' && preg_match('/^\w+:\w+$/', $ontologyOption)) {
+                        if (isset($ontologyOption) && $ontologyOption !== '' && preg_match('/^\w+:\w+$/', $ontologyOption)) {
                             // ontology fields are text fields with an element enum like "BIOPORTAL:ICD10"
                             list($ontologyService, $ontologyCategory) = explode(':', $ontologyOption, 2);
                             $outValue = $this->makeOntologyDisplay($value, $ontologyService, $ontologyCategory);
